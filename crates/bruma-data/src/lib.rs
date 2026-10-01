@@ -1,30 +1,30 @@
-//! Modelo y limpieza de los datos de calidad del aire.
+//! Air quality data model and cleaning.
 //!
-//! Nada aquí depende de una ciudad: cada fuente (la RMCAB en Bogotá, OpenAQ en
-//! otras ciudades, ...) se traduce a estos mismos tipos. En la Fase 0 el crate
-//! solo define los tipos básicos y la regla de limpieza de lecturas; los
-//! adaptadores de fuentes y la interpolación (IDW) llegan en la Fase 1.
+//! Nothing here depends on a city: every source (RMCAB in Bogotá, OpenAQ in
+//! other cities, ...) is translated into these same types. In Phase 0 the crate
+//! only defines the basic types and the reading-cleaning rule; source adapters
+//! and interpolation (IDW) arrive in Phase 1.
 //!
-//! No depende de nada del navegador, así que se prueba con `cargo test` normal
-//! y luego se compila a Wasm sin cambios.
+//! It depends on nothing from the browser, so it is tested with a regular
+//! `cargo test` and then compiled to Wasm unchanged.
 
-/// Variables que Bruma usa de cada estación.
+/// Variables Bruma uses from each station.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Variable {
-    /// Material particulado fino, en µg/m³.
+    /// Fine particulate matter, in µg/m³.
     Pm25,
-    /// Velocidad del viento, en m/s.
+    /// Wind speed, in m/s.
     WindSpeed,
-    /// Dirección del viento, en grados desde el norte (0–360).
+    /// Wind direction, in degrees from north (0–360).
     WindDirection,
 }
 
 impl Variable {
-    /// Rango de valores que se aceptan como mediciones reales.
+    /// Range of values accepted as real measurements.
     ///
-    /// Provisional: fuera de este rango la lectura se descarta. Los límites se
-    /// ajustarán con la documentación de cada red de monitoreo y con lo que
-    /// muestren los datos reales.
+    /// Provisional: readings outside this range are discarded. The limits will
+    /// be tuned with each monitoring network's documentation and with what the
+    /// real data shows.
     pub fn plausible_range(self) -> (f64, f64) {
         match self {
             Variable::Pm25 => (0.0, 500.0),
@@ -34,7 +34,7 @@ impl Variable {
     }
 }
 
-/// Una estación de monitoreo, en coordenadas geográficas (WGS 84).
+/// A monitoring station, in geographic coordinates (WGS 84).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Station {
     pub id: String,
@@ -43,12 +43,12 @@ pub struct Station {
     pub lat: f64,
 }
 
-/// Convierte un valor crudo del reporte en una medición utilizable.
+/// Turns a raw value from a report into a usable measurement.
 ///
-/// Devuelve `None` cuando el valor no sirve:
-/// - no es un número finito,
-/// - es un código de "sin dato" de la red (por ejemplo `-9999` o `-999`),
-/// - está fuera del rango plausible de la variable.
+/// Returns `None` when the value is not usable:
+/// - it is not a finite number,
+/// - it is a network "no data" code (for example `-9999` or `-999`),
+/// - it is outside the variable's plausible range.
 pub fn clean_reading(variable: Variable, raw: f64) -> Option<f64> {
     if !raw.is_finite() {
         return None;
@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn drops_implausible_values() {
-        // Valores como este aparecen en datos reales y no son mediciones válidas.
+        // Values like this show up in real data and are not valid measurements.
         assert_eq!(clean_reading(Variable::Pm25, 995.0), None);
         assert_eq!(clean_reading(Variable::WindDirection, 400.0), None);
     }

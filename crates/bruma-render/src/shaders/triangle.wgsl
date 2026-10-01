@@ -1,9 +1,9 @@
-// Fase 0: un triángulo, sin búferes de vértices.
-// Los vértices salen del índice (vertex_index) y el color "respira" con el tiempo.
+// Phase 0: a single triangle, no vertex buffers.
+// Vertices come from the vertex index and the color "breathes" over time.
 
 struct Globals {
     time: f32,
-    aspect: f32,   // ancho / alto del canvas, para no deformar el triángulo
+    aspect: f32,   // canvas width / height, so the triangle is not stretched
     _pad: vec2<f32>,
 };
 
@@ -16,13 +16,13 @@ struct VertexOut {
 
 @vertex
 fn vs_main(@builtin(vertex_index) index: u32) -> VertexOut {
-    // Un triángulo equilátero centrado.
+    // A centered equilateral triangle.
     var corners = array<vec2<f32>, 3>(
         vec2<f32>(0.0, 0.62),
         vec2<f32>(-0.54, -0.31),
         vec2<f32>(0.54, -0.31),
     );
-    // Paleta solarpunk: verde, dorado y un azul de cielo limpio.
+    // Solarpunk palette: green, gold and a clean-sky blue.
     var colors = array<vec3<f32>, 3>(
         vec3<f32>(0.35, 0.78, 0.48),
         vec3<f32>(0.95, 0.76, 0.30),
@@ -30,7 +30,7 @@ fn vs_main(@builtin(vertex_index) index: u32) -> VertexOut {
     );
 
     var p = corners[index];
-    // Corrige la proporción para que el triángulo no se estire en pantallas anchas.
+    // Correct the aspect ratio so the triangle does not stretch on wide screens.
     if (globals.aspect > 1.0) {
         p.x = p.x / globals.aspect;
     } else {
@@ -45,7 +45,7 @@ fn vs_main(@builtin(vertex_index) index: u32) -> VertexOut {
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    // Una pulsación lenta (~6 s por ciclo), como bruma que se mueve.
+    // A slow pulse (~6 s per cycle), like drifting haze.
     let breath = 0.85 + 0.15 * sin(globals.time * 1.05);
     return vec4<f32>(in.color * breath, 1.0);
 }

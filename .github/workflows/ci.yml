@@ -14,7 +14,7 @@ env:
 
 jobs:
   check:
-    name: Formato, lint y pruebas
+    name: Format, lint and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,26 +36,26 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Lint para wasm32
+      - name: Lint for wasm32
         run: cargo clippy -p bruma-web -p bruma-render --target wasm32-unknown-unknown -- -D warnings
-      - name: Instalar Trunk
+      - name: Install Trunk
         run: |
           curl -sSL "https://github.com/trunk-rs/trunk/releases/download/${TRUNK_VERSION}/trunk-x86_64-unknown-linux-gnu.tar.gz" \
             | tar -xz -C /usr/local/bin trunk
           trunk --version
-      - name: Build de producción
+      - name: Production build
         working-directory: web
         run: |
           set +e
           trunk build --release 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            # Muestra el final del log como anotación, visible en el resumen del PR.
+            # Show the end of the log as an annotation, visible in the PR summary.
             msg=$(tail -n 25 build.log | sed 's/\x1b\[[0-9;]*m//g' | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')
-            echo "::error title=trunk build falló::$msg"
+            echo "::error title=trunk build failed::$msg"
           fi
           exit "$status"
-      - name: Tamaño del binario
+      - name: Binary size
         working-directory: web/dist
         run: |
           for f in *.wasm; do

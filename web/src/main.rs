@@ -1,7 +1,7 @@
-//! Punto de entrada web de Bruma (Fase 0).
+//! Bruma web entry point (Phase 0).
 //!
-//! Busca el `<canvas>`, detecta si el navegador tiene WebGPU (si no, usa WebGL2),
-//! y dibuja un triángulo en cada cuadro con `requestAnimationFrame`.
+//! Finds the `<canvas>`, detects whether the browser has WebGPU (falling back to
+//! WebGL2), and draws a triangle every frame with `requestAnimationFrame`.
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -9,7 +9,7 @@ use bruma_render::Renderer;
 use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::{HtmlCanvasElement, Window};
 
-/// La función de cada cuadro; se guarda aquí para poder volver a pedirla desde sí misma.
+/// The per-frame callback; stored here so it can request itself again.
 type FrameCallback = Rc<RefCell<Option<Closure<dyn FnMut()>>>>;
 
 fn main() {
@@ -25,16 +25,16 @@ fn main() {
 }
 
 async fn start() -> Result<(), String> {
-    let window = web_sys::window().ok_or("no hay ventana del navegador")?;
-    let document = window.document().ok_or("no hay documento")?;
+    let window = web_sys::window().ok_or("no browser window")?;
+    let document = window.document().ok_or("no document")?;
     let canvas: HtmlCanvasElement = document
         .get_element_by_id("bruma-canvas")
-        .ok_or("no se encontró el canvas #bruma-canvas")?
+        .ok_or("canvas #bruma-canvas not found")?
         .dyn_into()
-        .map_err(|_| "#bruma-canvas no es un <canvas>")?;
+        .map_err(|_| "#bruma-canvas is not a <canvas>")?;
 
-    // Pedimos WebGPU y WebGL2; wgpu descarta WebGPU si el navegador no lo tiene,
-    // antes de tocar el canvas (un canvas solo puede tener un tipo de contexto).
+    // Ask for WebGPU and WebGL2; wgpu drops WebGPU if the browser lacks it,
+    // before touching the canvas (a canvas can only hold one context type).
     let mut descriptor = wgpu::InstanceDescriptor::new_without_display_handle();
     descriptor.backends = wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL;
     let instance = wgpu::util::new_instance_with_webgpu_detection(descriptor).await;
@@ -44,10 +44,10 @@ async fn start() -> Result<(), String> {
     let renderer = Renderer::new(&instance, surface, width, height)
         .await
         .map_err(|e| {
-            format!("Bruma necesita WebGPU o WebGL2 y este navegador no los ofrece ({e}).")
+            format!("Bruma needs WebGPU or WebGL2 and this browser offers neither ({e}).")
         })?;
 
-    log::info!("dibujando con {}", renderer.api());
+    log::info!("drawing with {}", renderer.api());
     set_text("bruma-api", &renderer.api().to_string());
     set_text("bruma-status", "");
 
@@ -68,7 +68,7 @@ fn create_surface(
 ) -> Result<wgpu::Surface<'static>, String> {
     instance
         .create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
-        .map_err(|e| format!("no se pudo usar el canvas: {e}"))
+        .map_err(|e| format!("could not use the canvas: {e}"))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -76,10 +76,10 @@ fn create_surface(
     _instance: &wgpu::Instance,
     _canvas: &HtmlCanvasElement,
 ) -> Result<wgpu::Surface<'static>, String> {
-    Err("Bruma web solo corre en el navegador (compila con Trunk)".into())
+    Err("Bruma web only runs in the browser (build it with Trunk)".into())
 }
 
-/// Tamaño del canvas en píxeles físicos (tamaño CSS × densidad de pantalla).
+/// Canvas size in physical pixels (CSS size × device pixel ratio).
 fn physical_size(window: &Window, canvas: &HtmlCanvasElement) -> (u32, u32) {
     let ratio = window.device_pixel_ratio();
     let width = (f64::from(canvas.client_width()) * ratio).round() as u32;
@@ -87,7 +87,7 @@ fn physical_size(window: &Window, canvas: &HtmlCanvasElement) -> (u32, u32) {
     (width.max(1), height.max(1))
 }
 
-/// Dibuja en cada cuadro y sigue el tamaño del canvas si cambia la ventana.
+/// Draws every frame and follows the canvas size when the window changes.
 fn run_loop(
     window: Window,
     canvas: HtmlCanvasElement,
@@ -111,7 +111,7 @@ fn run_loop(
         }
         renderer.resize(width, height);
 
-        // Con "reducir movimiento" activado, la imagen queda quieta.
+        // With "reduce motion" enabled, the image stays still.
         let time = match (&performance, reduced_motion) {
             (Some(p), false) => ((p.now() - started_at) / 1000.0) as f32,
             _ => 0.0,
@@ -130,7 +130,7 @@ fn run_loop(
 
 fn request_frame(window: &Window, callback: &Closure<dyn FnMut()>) {
     if let Err(e) = window.request_animation_frame(callback.as_ref().unchecked_ref()) {
-        log::error!("requestAnimationFrame falló: {e:?}");
+        log::error!("requestAnimationFrame failed: {e:?}");
     }
 }
 

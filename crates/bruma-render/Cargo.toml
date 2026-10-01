@@ -1,6 +1,6 @@
 [package]
 name = "bruma-render"
-description = "Renderizado de Bruma con wgpu (WebGPU con respaldo WebGL2)"
+description = "Bruma rendering with wgpu (WebGPU with WebGL2 fallback)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

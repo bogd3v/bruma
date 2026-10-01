@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bruma · la calidad del aire de tu ciudad</title>
-    <meta name="description" content="Bruma: la calidad del aire de una ciudad dibujada con Rust, WebAssembly y WebGPU. Fase 0: el primer triángulo." />
+    <title>Bruma · your city's air quality</title>
+    <meta name="description" content="Bruma: a city's air quality drawn with Rust, WebAssembly and WebGPU. Phase 0: the first triangle." />
     <meta name="color-scheme" content="dark" />
 
     <link data-trunk rel="rust" href="Cargo.toml" data-bin="bruma-web" data-wasm-opt="z"
@@ -13,24 +13,24 @@
   </head>
   <body>
     <main class="stage">
-      <canvas id="bruma-canvas" aria-label="Triángulo animado dibujado con la GPU: verde, dorado y azul sobre fondo oscuro">
+      <canvas id="bruma-canvas" aria-label="Animated triangle drawn with the GPU: green, gold and blue on a dark background">
       </canvas>
 
       <header class="hud">
         <h1>Bruma</h1>
-        <p>Fase 0 · el primer triángulo</p>
+        <p>Phase 0 · the first triangle</p>
       </header>
 
-      <p class="badge" aria-live="polite">GPU: <strong id="bruma-api">detectando…</strong></p>
-      <p id="bruma-status" class="status" role="status">Cargando WebAssembly…</p>
+      <p class="badge" aria-live="polite">GPU: <strong id="bruma-api">detecting…</strong></p>
+      <p id="bruma-status" class="status" role="status">Loading WebAssembly…</p>
 
       <footer class="credits">
-        Código abierto en
+        Open source at
         <a href="https://github.com/bogd3v/bruma">github.com/bogd3v/bruma</a>
         · <a href="https://bogdev.com.co">BogDev</a>
       </footer>
     </main>
 
-    <noscript>Bruma necesita JavaScript y WebAssembly para dibujar con la GPU.</noscript>
+    <noscript>Bruma needs JavaScript and WebAssembly to draw with the GPU.</noscript>
   </body>
 </html>

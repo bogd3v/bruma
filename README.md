@@ -1,42 +1,42 @@
 # Bruma
 
-La calidad del aire de tu ciudad, dibujada con la GPU.
+Your city's air quality, drawn with the GPU.
 
-Bruma es un visualizador web que toma los datos de las estaciones de monitoreo de una
-ciudad, los procesa con **Rust compilado a WebAssembly** y los dibuja con **WebGPU** (con
-respaldo en WebGL2). Funciona con cualquier ciudad que tenga estaciones con datos
-públicos: cada ciudad es una configuración y cada red de monitoreo, un adaptador.
-**Bogotá es la primera ciudad** y el caso de referencia.
+Bruma is a web visualizer that takes data from a city's monitoring stations, processes it
+with **Rust compiled to WebAssembly** and draws it with **WebGPU** (with a WebGL2
+fallback). It works for any city whose stations publish public data: each city is a
+configuration and each monitoring network is an adapter. **Bogotá is the first city** and
+the reference case.
 
-Es un proyecto abierto de [BogDev](https://bogdev.com.co) y se construye por etapas, cada
-una contada en una serie de posts del blog.
+It is an open project by [BogDev](https://bogdev.com.co), built in stages, each one told in
+a series of blog posts.
 
-> **Estado: Fase 0.** El repositorio, la compilación a Wasm y el primer triángulo en la
-> GPU. Todavía no hay datos de calidad del aire.
+> **Status: Phase 0.** The repository, the Wasm build and the first triangle on the GPU.
+> There is no air quality data yet.
 
-## Cómo se ve la Fase 0
+## What Phase 0 looks like
 
-Un triángulo animado sobre un canvas a pantalla completa. Arriba a la derecha, Bruma dice
-qué API gráfica eligió el navegador: **WebGPU** si está disponible, **WebGL2** si no. El
-mismo código Rust corre en ambos casos. Si el sistema pide reducir el movimiento
-(`prefers-reduced-motion`), la animación queda quieta.
+An animated triangle on a full-screen canvas. In the top right corner, Bruma shows which
+graphics API the browser picked: **WebGPU** if available, **WebGL2** otherwise. The same
+Rust code runs in both cases. If the system asks for reduced motion
+(`prefers-reduced-motion`), the animation stays still.
 
-## Estructura
+## Structure
 
 ```
 bruma/
 ├── crates/
-│   ├── bruma-data/     # modelo y limpieza de datos, común a todas las ciudades (Fase 1: adaptadores e IDW)
-│   └── bruma-render/   # wgpu + shaders WGSL
-├── web/                # app web: index.html, estilos y punto de entrada en Rust (Trunk)
-├── docs/               # decisiones técnicas
+│   ├── bruma-data/     # data model and cleaning, shared by every city (Phase 1: adapters and IDW)
+│   └── bruma-render/   # wgpu + WGSL shaders
+├── web/                # web app: index.html, styles and Rust entry point (Trunk)
+├── docs/               # technical decisions
 ├── LICENSE-MIT
 └── LICENSE-APACHE
 ```
 
-## Requisitos
+## Requirements
 
-- Rust estable (1.87 o más reciente) con el target de WebAssembly:
+- Stable Rust (1.87 or newer) with the WebAssembly target:
   ```bash
   rustup target add wasm32-unknown-unknown
   ```
@@ -45,21 +45,21 @@ bruma/
   cargo install --locked trunk
   ```
 
-## Desarrollo
+## Development
 
 ```bash
 cd web
-trunk serve --open        # http://127.0.0.1:8080, con recarga automática
+trunk serve --open        # http://127.0.0.1:8080, with live reload
 ```
 
-Build de producción (queda en `web/dist/`, listo para servir como sitio estático):
+Production build (output in `web/dist/`, ready to serve as a static site):
 
 ```bash
 cd web
 trunk build --release
 ```
 
-Pruebas, formato y lint (corren en la máquina, sin navegador):
+Tests, formatting and lint (run natively, no browser needed):
 
 ```bash
 cargo test --workspace
@@ -67,55 +67,61 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-La prueba de `bruma-render` valida el shader WGSL con naga, así que un error de sintaxis
-en el shader aparece en `cargo test` y no al abrir la página.
+The `bruma-render` test validates the WGSL shader with naga, so a shader syntax error shows
+up in `cargo test` instead of when the page is opened.
 
-## Compatibilidad
+## Compatibility
 
-| Navegador | API que usa Bruma |
+| Browser | API Bruma uses |
 | --- | --- |
-| Chrome / Edge recientes | WebGPU |
+| Recent Chrome / Edge | WebGPU |
 | Safari 26+ (macOS, iOS, iPadOS) | WebGPU |
-| Firefox reciente (Windows, macOS) | WebGPU |
-| Firefox en Linux y navegadores sin WebGPU | WebGL2 |
+| Recent Firefox (Windows, macOS) | WebGPU |
+| Firefox on Linux and browsers without WebGPU | WebGL2 |
 
-## Hoja de ruta
+## Roadmap
 
-- **Fase 0 — Fundaciones** (este punto): workspace, Trunk, CI y el primer render en WebGPU y WebGL2.
-- **Fase 1 — MVP:** configuración de ciudades, adaptadores de datos (RMCAB para Bogotá y OpenAQ como fuente genérica), interpolación IDW y mapa de calor.
-- **Fase 2 — v1:** partículas con compute shaders, viento, línea de tiempo de 24 horas, más ciudades y benchmark CPU vs GPU.
+- **Phase 0 — Foundations** (current): workspace, Trunk, CI and the first render on WebGPU and WebGL2.
+- **Phase 1 — MVP:** city configuration, data adapters (RMCAB for Bogotá and OpenAQ as a generic source), IDW interpolation and heat map.
+- **Phase 2 — v1:** compute-shader particles, wind, 24-hour timeline, more cities and a CPU vs GPU benchmark.
 
-## Agregar tu ciudad
+## Add your city
 
-A partir de la Fase 1 bastará con describir la ciudad (nombre, zona del mapa, contorno) y
-elegir de dónde salen sus datos:
+Starting in Phase 1 it will be enough to describe the city (name, map area, outline) and
+choose where its data comes from:
 
-- **OpenAQ**, si la ciudad tiene estaciones con datos recientes ahí: no hace falta escribir código.
-- **Un adaptador propio**, si la red local publica sus datos por otra vía (como la RMCAB en Bogotá).
+- **OpenAQ**, if the city has stations with recent data there: no code needed.
+- **A custom adapter**, if the local network publishes its data some other way (like RMCAB
+  in Bogotá).
 
-Si quieres ver tu ciudad en Bruma, abre un issue con el nombre de la ciudad y dónde
-publica sus datos de calidad del aire.
+If you want to see your city in Bruma, open an issue with the city's name and where it
+publishes its air quality data.
 
-Las decisiones de diseño están en [`docs/decisiones.md`](docs/decisiones.md).
+Design decisions are recorded in [`docs/decisions.md`](docs/decisions.md).
 
-## Datos y atribución
+## Data and attribution
 
-A partir de la Fase 1, cada ciudad muestra la atribución de sus propias fuentes. En todos
-los casos, los valores entre estaciones son estimaciones por interpolación y Bruma no
-reemplaza los canales oficiales de alertas.
+Starting in Phase 1, each city shows the attribution for its own sources. In every case,
+values between stations are interpolated estimates, and Bruma does not replace official
+alert channels.
 
 - **Bogotá:** Red de Monitoreo de Calidad del Aire de Bogotá (RMCAB) – Secretaría Distrital
-  de Ambiente; cartografía de IDECA – Mapa de Referencia de Bogotá, CC BY 4.0.
-- **Otras ciudades:** datos vía [OpenAQ](https://openaq.org), con la licencia que indique
-  cada proveedor; cartografía de © colaboradores de OpenStreetMap (ODbL).
+  de Ambiente; cartography from IDECA – Mapa de Referencia de Bogotá, CC BY 4.0.
+- **Other cities:** data via [OpenAQ](https://openaq.org), under the license each provider
+  specifies; cartography © OpenStreetMap contributors (ODbL).
 
-El repositorio no guarda copias de los datos.
+The repository does not store copies of the data.
 
-## Licencia
+## License
 
-El código se publica bajo **MIT o Apache-2.0**, a tu elección
-([LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE)), como es costumbre en el
-ecosistema Rust. Los textos y capturas de los posts del blog van bajo CC BY 4.0.
+The code is released under **MIT or Apache-2.0**, at your option
+([LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE)), as is customary in the
+Rust ecosystem. Blog post texts and screenshots are under CC BY 4.0.
 
-Salvo que digas lo contrario, cualquier contribución que envíes para incluir en Bruma se
-publica bajo esas mismas dos licencias, sin términos adicionales.
+Unless you explicitly state otherwise, any contribution you submit for inclusion in Bruma
+is dual licensed as above, without any additional terms or conditions.
+
+## Contributing
+
+Everything in this repository is written in **English**: code, comments, documentation,
+UI text, log and error messages, and commit messages.

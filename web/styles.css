@@ -27,7 +27,7 @@ body {
   overflow: hidden;
 }
 
-/* El canvas llena el contenedor; Rust ajusta sus píxeles reales al tamaño CSS. */
+/* The canvas fills its container; Rust matches its real pixels to the CSS size. */
 #bruma-canvas {
   display: block;
   width: 100%;

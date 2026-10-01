@@ -14,7 +14,7 @@ authors = ["BogDev <https://bogdev.com.co>"]
 bruma-data = { path = "crates/bruma-data" }
 bruma-render = { path = "crates/bruma-render" }
 
-# WebGPU como camino principal y WebGL2 como respaldo, ambos desde la misma API.
+# WebGPU as the main path and WebGL2 as the fallback, both through the same API.
 wgpu = { version = "30", default-features = false, features = ["std", "wgsl", "webgpu", "webgl"] }
 bytemuck = { version = "1.25", features = ["derive"] }
 log = "0.4"
@@ -26,7 +26,7 @@ console_error_panic_hook = "0.1"
 console_log = "1.0"
 
 [profile.release]
-# Binario Wasm pequeño: la carga inicial importa más que unos milisegundos de CPU.
+# Small Wasm binary: initial download matters more than a few milliseconds of CPU.
 opt-level = "z"
 lto = true
 codegen-units = 1

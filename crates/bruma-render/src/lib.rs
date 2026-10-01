@@ -1,17 +1,17 @@
-//! Renderizado de Bruma con wgpu.
+//! Bruma rendering with wgpu.
 //!
-//! La misma API de wgpu habla con WebGPU cuando el navegador lo soporta y con
-//! WebGL2 cuando no. Este crate no sabe nada del DOM: recibe una `Surface` ya
-//! creada (por ejemplo, a partir de un `<canvas>`) y se encarga del resto.
+//! The same wgpu API talks to WebGPU when the browser supports it and to
+//! WebGL2 when it does not. This crate knows nothing about the DOM: it receives
+//! an already created `Surface` (for example, from a `<canvas>`) and handles the rest.
 
 use std::fmt;
 
-/// Qué API gráfica terminó usando el navegador.
+/// Which graphics API the browser ended up using.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraphicsApi {
     WebGpu,
     WebGl2,
-    /// Otro backend (por ejemplo, al ejecutar fuera del navegador).
+    /// Any other backend (for example, when running outside the browser).
     Other(wgpu::Backend),
 }
 
@@ -35,7 +35,7 @@ impl fmt::Display for GraphicsApi {
     }
 }
 
-/// Errores al preparar la GPU.
+/// Errors while setting up the GPU.
 #[derive(Debug)]
 pub enum RenderError {
     NoAdapter(wgpu::RequestAdapterError),
@@ -46,16 +46,18 @@ pub enum RenderError {
 impl fmt::Display for RenderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RenderError::NoAdapter(e) => write!(f, "no se encontró una GPU compatible: {e}"),
-            RenderError::NoDevice(e) => write!(f, "no se pudo abrir la GPU: {e}"),
-            RenderError::UnsupportedSurface => f.write_str("el canvas no es compatible con la GPU"),
+            RenderError::NoAdapter(e) => write!(f, "no compatible GPU found: {e}"),
+            RenderError::NoDevice(e) => write!(f, "could not open the GPU: {e}"),
+            RenderError::UnsupportedSurface => {
+                f.write_str("the canvas is not compatible with the GPU")
+            }
         }
     }
 }
 
 impl std::error::Error for RenderError {}
 
-/// Datos que el shader lee en cada cuadro. Debe coincidir con `Globals` en WGSL.
+/// Data the shader reads every frame. Must match `Globals` in WGSL.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct Globals {
@@ -64,7 +66,7 @@ struct Globals {
     _pad: [f32; 2],
 }
 
-/// Fondo oscuro del canvas: el "cielo" sobre el que se dibuja.
+/// Dark canvas background: the "sky" everything is drawn on.
 const CLEAR_COLOR: wgpu::Color = wgpu::Color {
     r: 0.035,
     g: 0.045,
@@ -84,7 +86,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    /// Elige una GPU compatible con `surface`, abre el dispositivo y prepara el pipeline.
+    /// Picks a GPU compatible with `surface`, opens the device and builds the pipeline.
     pub async fn new(
         instance: &wgpu::Instance,
         surface: wgpu::Surface<'static>,
@@ -104,7 +106,7 @@ impl Renderer {
         let api = GraphicsApi::from_backend(adapter.get_info().backend);
         log::info!("GPU: {} ({api})", adapter.get_info().name);
 
-        // Pedimos solo lo que WebGL2 garantiza; así el mismo código corre en ambos.
+        // Request only what WebGL2 guarantees, so the same code runs on both backends.
         let limits = wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits());
 
         let (device, queue) = adapter
@@ -218,17 +220,17 @@ impl Renderer {
         })
     }
 
-    /// API gráfica en uso (para mostrarla en la interfaz).
+    /// Graphics API in use (to show it in the UI).
     pub fn api(&self) -> GraphicsApi {
         self.api
     }
 
-    /// Lado máximo de textura que admite la GPU; el canvas no debe pasarse de aquí.
+    /// Largest texture side the GPU supports; the canvas must not exceed it.
     pub fn max_dimension(&self) -> u32 {
         self.device.limits().max_texture_dimension_2d
     }
 
-    /// Ajusta la superficie al nuevo tamaño del canvas, en píxeles físicos.
+    /// Resizes the surface to the new canvas size, in physical pixels.
     pub fn resize(&mut self, width: u32, height: u32) {
         let max = self.max_dimension();
         let (width, height) = (width.clamp(1, max), height.clamp(1, max));
@@ -240,12 +242,12 @@ impl Renderer {
         self.surface.configure(&self.device, &self.config);
     }
 
-    /// Dibuja un cuadro. `time` es el tiempo en segundos desde el inicio.
+    /// Draws one frame. `time` is the time in seconds since start.
     pub fn render(&mut self, time: f32) {
         let frame = match self.surface.get_current_texture() {
             wgpu::CurrentSurfaceTexture::Success(frame) => frame,
             wgpu::CurrentSurfaceTexture::Suboptimal(frame) => {
-                // Se usa este cuadro y se reconfigura para el siguiente.
+                // Use this frame and reconfigure for the next one.
                 self.surface.configure(&self.device, &self.config);
                 frame
             }
@@ -254,7 +256,7 @@ impl Renderer {
                 return;
             }
             other => {
-                log::warn!("se omite un cuadro: {other:?}");
+                log::warn!("skipping a frame: {other:?}");
                 return;
             }
         };
@@ -303,17 +305,17 @@ impl Renderer {
 
 #[cfg(test)]
 mod tests {
-    /// El shader debe ser WGSL válido; así un error aparece en `cargo test`
-    /// y no recién al abrir la página en el navegador.
+    /// The shader must be valid WGSL, so a mistake shows up in `cargo test`
+    /// instead of only when the page is opened in the browser.
     #[test]
     fn triangle_shader_is_valid_wgsl() {
         let source = include_str!("shaders/triangle.wgsl");
-        let module = naga::front::wgsl::parse_str(source).expect("el WGSL no se pudo leer");
+        let module = naga::front::wgsl::parse_str(source).expect("could not parse the WGSL");
         naga::valid::Validator::new(
             naga::valid::ValidationFlags::all(),
             naga::valid::Capabilities::empty(),
         )
         .validate(&module)
-        .expect("el WGSL no pasó la validación");
+        .expect("the WGSL failed validation");
     }
 }

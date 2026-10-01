@@ -1,6 +1,6 @@
 [package]
 name = "bruma-web"
-description = "Aplicación web de Bruma: canvas, ciclo de animación e interfaz mínima"
+description = "Bruma web app: canvas, animation loop and minimal UI"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
