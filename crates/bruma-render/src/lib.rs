@@ -4,12 +4,14 @@
 //! WebGL2 when it does not. This crate knows nothing about the DOM: it receives
 //! an already created `Surface` (for example, from a `<canvas>`) and handles the rest.
 
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 /// Which graphics API the browser ended up using.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraphicsApi {
+    /// The browser's native WebGPU implementation.
     WebGpu,
+    /// The WebGL2 fallback.
     WebGl2,
     /// Any other backend (for example, when running outside the browser).
     Other(wgpu::Backend),
@@ -38,8 +40,11 @@ impl fmt::Display for GraphicsApi {
 /// Errors while setting up the GPU.
 #[derive(Debug)]
 pub enum RenderError {
+    /// No GPU adapter compatible with the surface was found.
     NoAdapter(wgpu::RequestAdapterError),
+    /// The adapter refused to open a device with the requested limits.
     NoDevice(wgpu::RequestDeviceError),
+    /// The surface reports no usable format or alpha mode.
     UnsupportedSurface,
 }
 
@@ -66,6 +71,9 @@ struct Globals {
     _pad: [f32; 2],
 }
 
+// WGSL rounds uniform struct sizes up to a multiple of 16 bytes.
+const _: () = assert!(std::mem::size_of::<Globals>().is_multiple_of(16));
+
 /// Dark canvas background: the "sky" everything is drawn on.
 const CLEAR_COLOR: wgpu::Color = wgpu::Color {
     r: 0.035,
@@ -74,6 +82,7 @@ const CLEAR_COLOR: wgpu::Color = wgpu::Color {
     a: 1.0,
 };
 
+/// Owns the GPU device and draws Bruma into one surface.
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -119,9 +128,19 @@ impl Renderer {
             .map_err(RenderError::NoDevice)?;
 
         let caps = surface.get_capabilities(&adapter);
-        let format = *caps
+        // Shader colors are already sRGB-encoded, so they are written to a non-sRGB
+        // target unchanged. Choosing it explicitly keeps colors identical on WebGPU
+        // and WebGL2, whatever order each backend lists its formats in.
+        let format = caps
             .formats
-            .first()
+            .iter()
+            .copied()
+            .find(|format| !format.is_srgb())
+            .or_else(|| {
+                caps.formats
+                    .first()
+                    .map(|format| format.remove_srgb_suffix())
+            })
             .ok_or(RenderError::UnsupportedSurface)?;
         let alpha_mode = *caps
             .alpha_modes
@@ -220,6 +239,26 @@ impl Renderer {
         })
     }
 
+    /// Calls `handler` with a readable message whenever the GPU reports an error
+    /// nobody caught, or the device is lost. Without this, both fail silently.
+    pub fn on_gpu_error(&self, handler: impl Fn(String) + Send + Sync + 'static) {
+        let handler = Arc::new(handler);
+
+        let on_error = Arc::clone(&handler);
+        self.device
+            .on_uncaptured_error(Arc::new(move |error: wgpu::Error| {
+                on_error(format!("GPU error: {error}"));
+            }));
+
+        self.device
+            .set_device_lost_callback(move |reason, message| {
+                // `Destroyed` is the normal end of life (e.g. the page is closing).
+                if reason != wgpu::DeviceLostReason::Destroyed {
+                    handler(format!("the GPU device was lost: {message}"));
+                }
+            });
+    }
+
     /// Graphics API in use (to show it in the UI).
     pub fn api(&self) -> GraphicsApi {
         self.api
@@ -305,17 +344,79 @@ impl Renderer {
 
 #[cfg(test)]
 mod tests {
-    /// The shader must be valid WGSL, so a mistake shows up in `cargo test`
-    /// instead of only when the page is opened in the browser.
-    #[test]
-    fn triangle_shader_is_valid_wgsl() {
-        let source = include_str!("shaders/triangle.wgsl");
+    use naga::back::glsl;
+
+    const TRIANGLE: &str = include_str!("shaders/triangle.wgsl");
+
+    fn parse_and_validate(source: &str) -> (naga::Module, naga::valid::ModuleInfo) {
         let module = naga::front::wgsl::parse_str(source).expect("could not parse the WGSL");
-        naga::valid::Validator::new(
+        let info = naga::valid::Validator::new(
             naga::valid::ValidationFlags::all(),
             naga::valid::Capabilities::empty(),
         )
         .validate(&module)
         .expect("the WGSL failed validation");
+        (module, info)
+    }
+
+    /// The shader must be valid WGSL, so a mistake shows up in `cargo test`
+    /// instead of only when the page is opened in the browser.
+    #[test]
+    fn triangle_shader_is_valid_wgsl() {
+        parse_and_validate(TRIANGLE);
+    }
+
+    /// Every entry point must translate to GLSL ES 3.00; otherwise it cannot
+    /// run on the WebGL2 fallback.
+    #[test]
+    fn triangle_shader_translates_to_webgl2() {
+        let (module, info) = parse_and_validate(TRIANGLE);
+        let options = glsl::Options {
+            version: glsl::Version::Embedded {
+                version: 300,
+                is_webgl: true,
+            },
+            ..Default::default()
+        };
+        for (stage, entry_point) in [
+            (naga::ShaderStage::Vertex, "vs_main"),
+            (naga::ShaderStage::Fragment, "fs_main"),
+        ] {
+            let pipeline_options = glsl::PipelineOptions {
+                shader_stage: stage,
+                entry_point: entry_point.into(),
+                multiview: None,
+            };
+            let mut output = String::new();
+            glsl::Writer::new(
+                &mut output,
+                &module,
+                &info,
+                &options,
+                &pipeline_options,
+                naga::proc::BoundsCheckPolicies::default(),
+            )
+            .and_then(|mut writer| writer.write())
+            .unwrap_or_else(|e| panic!("{entry_point} does not translate to GLSL ES 3.00: {e}"));
+        }
+    }
+
+    /// `Globals` in Rust must have exactly the size naga computes for its WGSL twin.
+    #[test]
+    fn globals_layout_matches_wgsl() {
+        let (module, _) = parse_and_validate(TRIANGLE);
+        let mut layouter = naga::proc::Layouter::default();
+        layouter
+            .update(module.to_ctx())
+            .expect("could not compute the WGSL layout");
+        let (handle, _) = module
+            .types
+            .iter()
+            .find(|(_, ty)| ty.name.as_deref() == Some("Globals"))
+            .expect("struct Globals not found in the shader");
+        assert_eq!(
+            layouter[handle].size as usize,
+            std::mem::size_of::<super::Globals>()
+        );
     }
 }

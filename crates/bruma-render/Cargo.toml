@@ -8,10 +8,13 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 wgpu.workspace = true
 bytemuck.workspace = true
 log.workspace = true
 
 [dev-dependencies]
-naga = { version = "30", features = ["wgsl-in"] }
+naga = { version = "30", features = ["wgsl-in", "glsl-out"] }

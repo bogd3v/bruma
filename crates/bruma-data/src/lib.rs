@@ -37,9 +37,13 @@ impl Variable {
 /// A monitoring station, in geographic coordinates (WGS 84).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Station {
+    /// Identifier assigned by the monitoring network.
     pub id: String,
+    /// Human-readable name, as published by the network.
     pub name: String,
+    /// Longitude, in decimal degrees (east is positive).
     pub lon: f64,
+    /// Latitude, in decimal degrees (north is positive).
     pub lat: f64,
 }
 

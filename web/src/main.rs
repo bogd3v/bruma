@@ -14,6 +14,7 @@ type FrameCallback = Rc<RefCell<Option<Closure<dyn FnMut()>>>>;
 
 fn main() {
     console_error_panic_hook::set_once();
+    // Only fails if a logger is already installed; the app works without logs.
     let _ = console_log::init_with_level(log::Level::Info);
 
     wasm_bindgen_futures::spawn_local(async {
@@ -46,6 +47,11 @@ async fn start() -> Result<(), String> {
         .map_err(|e| {
             format!("Bruma needs WebGPU or WebGL2 and this browser offers neither ({e}).")
         })?;
+
+    renderer.on_gpu_error(|message| {
+        log::error!("{message}");
+        set_text("bruma-status", &message);
+    });
 
     log::info!("drawing with {}", renderer.api());
     set_text("bruma-api", &renderer.api().to_string());
@@ -88,6 +94,9 @@ fn physical_size(window: &Window, canvas: &HtmlCanvasElement) -> (u32, u32) {
 }
 
 /// Draws every frame and follows the canvas size when the window changes.
+///
+/// With reduced motion the image is still, so it is only redrawn when the
+/// canvas size changes.
 fn run_loop(
     window: Window,
     canvas: HtmlCanvasElement,
@@ -101,22 +110,28 @@ fn run_loop(
     let next = frame.clone();
     let loop_window = window.clone();
 
+    let mut drawn = false;
+
     *frame.borrow_mut() = Some(Closure::new(move || {
         let max = renderer.max_dimension();
         let (width, height) = physical_size(&loop_window, &canvas);
         let (width, height) = (width.min(max), height.min(max));
-        if canvas.width() != width || canvas.height() != height {
+        let resized = canvas.width() != width || canvas.height() != height;
+        if resized {
+            // Resizing the canvas clears it, so this always forces a redraw.
             canvas.set_width(width);
             canvas.set_height(height);
         }
         renderer.resize(width, height);
 
-        // With "reduce motion" enabled, the image stays still.
-        let time = match (&performance, reduced_motion) {
-            (Some(p), false) => ((p.now() - started_at) / 1000.0) as f32,
-            _ => 0.0,
-        };
-        renderer.render(time);
+        if !reduced_motion || resized || !drawn {
+            let time = match (&performance, reduced_motion) {
+                (Some(p), false) => ((p.now() - started_at) / 1000.0) as f32,
+                _ => 0.0,
+            };
+            renderer.render(time);
+            drawn = true;
+        }
 
         if let Some(callback) = next.borrow().as_ref() {
             request_frame(&loop_window, callback);

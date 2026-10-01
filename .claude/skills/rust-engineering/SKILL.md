@@ -118,7 +118,7 @@ obvious (`Add IDW interpolation to bruma-data`, not `Added stuff`).
 ```bash
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
-cargo clippy -p bruma-web -p bruma-render --target wasm32-unknown-unknown -- -D warnings
+cargo clippy --workspace --target wasm32-unknown-unknown -- -D warnings
 cargo test --workspace
 (cd web && trunk build --release)   # if web/ or bruma-render changed
 ```

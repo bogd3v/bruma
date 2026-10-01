@@ -25,7 +25,17 @@ one does, the new decision is added here instead of deleting the old one.
   the same code behaves the same on both. WebGPU-only features (compute shaders) arrive in
   Phase 2 on their own path.
 - **Shaders validated in `cargo test`** with naga.
-- **Accessibility:** with `prefers-reduced-motion` the animation stops.
+- **Shaders must also translate to GLSL ES 3.00** (naga `glsl-out`) in `cargo test`, so a
+  shader that would break the WebGL2 fallback fails before reaching the browser.
+- **Uniform layout checked in tests:** each Rust uniform struct must match the size naga
+  computes for its WGSL twin.
+- **Non-sRGB surface format, chosen explicitly:** shader colors are already sRGB-encoded,
+  so they look the same on WebGPU and WebGL2 regardless of how each backend orders its
+  formats.
+- **GPU errors are surfaced:** uncaptured errors and device loss are shown in the status
+  line instead of failing silently.
+- **Accessibility:** with `prefers-reduced-motion` the animation stops, and the frame is
+  only redrawn when the canvas size changes.
 
 ## Cities
 
@@ -65,3 +75,6 @@ one does, the new decision is added here instead of deleting the old one.
   and error messages, CI step names and commit messages. Earlier commits stay as they are;
   history is not rewritten. Data source names keep their official names (e.g. RMCAB,
   Secretaría Distrital de Ambiente).
+- **Workspace lints** (`[workspace.lints]`): `unsafe_code` is forbidden, public items need
+  docs, and `unwrap`, `dbg!` and `todo!` are rejected outside tests. CI runs clippy for the
+  whole workspace on both the native and the `wasm32` target.

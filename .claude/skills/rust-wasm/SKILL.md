@@ -95,7 +95,7 @@ Initial download is the metric that matters most (profile `opt-level = "z"`, LTO
   `wasm_bindgen_test_configure!(run_in_browser);`, run with
   `wasm-pack test --headless --firefox` (or `--chrome`). Use sparingly: it is slow.
 - Before closing a change in `web/`, also build for wasm:
-  `cargo clippy -p bruma-web -p bruma-render --target wasm32-unknown-unknown -- -D warnings`
+  `cargo clippy --workspace --target wasm32-unknown-unknown -- -D warnings`
   and `cd web && trunk build --release`.
 - Manual check: `trunk serve`, open in a browser with WebGPU and in one without it (e.g.
   Firefox on Linux) to confirm both paths; the console must be free of errors and warnings.
