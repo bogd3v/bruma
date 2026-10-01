@@ -3,11 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bruma · calidad del aire de Bogotá</title>
-    <meta name="description" content="Bruma: la calidad del aire de Bogotá dibujada con Rust, WebAssembly y WebGPU. Fase 0: el primer triángulo." />
+    <title>Bruma · la calidad del aire de tu ciudad</title>
+    <meta name="description" content="Bruma: la calidad del aire de una ciudad dibujada con Rust, WebAssembly y WebGPU. Fase 0: el primer triángulo." />
     <meta name="color-scheme" content="dark" />
 
-    <link data-trunk rel="rust" href="Cargo.toml" data-bin="bruma-web" data-wasm-opt="z" />
+    <link data-trunk rel="rust" href="Cargo.toml" data-bin="bruma-web" data-wasm-opt="z"
+      data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue" />
     <link data-trunk rel="css" href="styles.css" />
   </head>
   <body>

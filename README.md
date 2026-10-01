@@ -1,9 +1,13 @@
 # Bruma
 
-La calidad del aire de Bogotá, dibujada con la GPU.
+La calidad del aire de tu ciudad, dibujada con la GPU.
 
-Bruma es un visualizador web que procesa los datos de las estaciones de la ciudad con
-**Rust compilado a WebAssembly** y los dibuja con **WebGPU** (con respaldo en WebGL2).
+Bruma es un visualizador web que toma los datos de las estaciones de monitoreo de una
+ciudad, los procesa con **Rust compilado a WebAssembly** y los dibuja con **WebGPU** (con
+respaldo en WebGL2). Funciona con cualquier ciudad que tenga estaciones con datos
+públicos: cada ciudad es una configuración y cada red de monitoreo, un adaptador.
+**Bogotá es la primera ciudad** y el caso de referencia.
+
 Es un proyecto abierto de [BogDev](https://bogdev.com.co) y se construye por etapas, cada
 una contada en una serie de posts del blog.
 
@@ -22,7 +26,7 @@ mismo código Rust corre en ambos casos. Si el sistema pide reducir el movimient
 ```
 bruma/
 ├── crates/
-│   ├── bruma-data/     # modelo y limpieza de datos (Fase 1: descarga e interpolación IDW)
+│   ├── bruma-data/     # modelo y limpieza de datos, común a todas las ciudades (Fase 1: adaptadores e IDW)
 │   └── bruma-render/   # wgpu + shaders WGSL
 ├── web/                # app web: index.html, estilos y punto de entrada en Rust (Trunk)
 ├── docs/               # decisiones técnicas
@@ -78,19 +82,32 @@ en el shader aparece en `cargo test` y no al abrir la página.
 ## Hoja de ruta
 
 - **Fase 0 — Fundaciones** (este punto): workspace, Trunk, CI y el primer render en WebGPU y WebGL2.
-- **Fase 1 — MVP:** datos horarios de PM2.5 de la RMCAB, interpolación IDW y mapa de calor.
-- **Fase 2 — v1:** partículas con compute shaders, viento, línea de tiempo de 24 horas y benchmark CPU vs GPU.
+- **Fase 1 — MVP:** configuración de ciudades, adaptadores de datos (RMCAB para Bogotá y OpenAQ como fuente genérica), interpolación IDW y mapa de calor.
+- **Fase 2 — v1:** partículas con compute shaders, viento, línea de tiempo de 24 horas, más ciudades y benchmark CPU vs GPU.
+
+## Agregar tu ciudad
+
+A partir de la Fase 1 bastará con describir la ciudad (nombre, zona del mapa, contorno) y
+elegir de dónde salen sus datos:
+
+- **OpenAQ**, si la ciudad tiene estaciones con datos recientes ahí: no hace falta escribir código.
+- **Un adaptador propio**, si la red local publica sus datos por otra vía (como la RMCAB en Bogotá).
+
+Si quieres ver tu ciudad en Bruma, abre un issue con el nombre de la ciudad y dónde
+publica sus datos de calidad del aire.
 
 Las decisiones de diseño están en [`docs/decisiones.md`](docs/decisiones.md).
 
 ## Datos y atribución
 
-A partir de la Fase 1:
+A partir de la Fase 1, cada ciudad muestra la atribución de sus propias fuentes. En todos
+los casos, los valores entre estaciones son estimaciones por interpolación y Bruma no
+reemplaza los canales oficiales de alertas.
 
-- **Calidad del aire:** Red de Monitoreo de Calidad del Aire de Bogotá (RMCAB) – Secretaría
-  Distrital de Ambiente. Datos prevalidados; los valores entre estaciones son estimaciones
-  por interpolación. Bruma no reemplaza los canales oficiales de alertas.
-- **Cartografía:** IDECA – Mapa de Referencia de Bogotá, CC BY 4.0.
+- **Bogotá:** Red de Monitoreo de Calidad del Aire de Bogotá (RMCAB) – Secretaría Distrital
+  de Ambiente; cartografía de IDECA – Mapa de Referencia de Bogotá, CC BY 4.0.
+- **Otras ciudades:** datos vía [OpenAQ](https://openaq.org), con la licencia que indique
+  cada proveedor; cartografía de © colaboradores de OpenStreetMap (ODbL).
 
 El repositorio no guarda copias de los datos.
 

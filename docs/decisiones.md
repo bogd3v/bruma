@@ -27,15 +27,28 @@ se anota aquí en vez de borrar la anterior.
 - **Shaders validados en `cargo test`** con naga.
 - **Accesibilidad:** con `prefers-reduced-motion` la animación se detiene.
 
+## Ciudades
+
+- **Bruma sirve para cualquier ciudad.** Nada en el render ni en el modelo de datos depende
+  de Bogotá. Una ciudad es una configuración: nombre, zona del mapa, contorno, fuentes de
+  datos y atribución.
+- **Bogotá es la primera ciudad** y el caso de referencia con el que se prueba todo.
+- **Cada red de monitoreo es un adaptador** que traduce sus datos al modelo común de
+  `bruma-data`. Así, agregar una ciudad con una fuente ya soportada no exige escribir código.
+
 ## Datos
 
-- **Fuente:** reporte horario público de la RMCAB (Secretaría Distrital de Ambiente),
-  consultado una vez por hora desde un proxy propio, nunca desde el navegador de cada
-  visitante. OpenAQ se descartó para tiempo real: sus datos de Bogotá dejaron de
-  actualizarse en 2022 y no incluyen viento.
-- **Respaldo para viento:** Open-Meteo (datos modelados, etiquetados como tales).
-- **Cartografía:** IDECA – Mapa de Referencia de Bogotá (CC BY 4.0); OpenStreetMap como
-  alternativa.
+- **Bogotá:** reporte horario público de la RMCAB (Secretaría Distrital de Ambiente). OpenAQ
+  no sirve para Bogotá en tiempo real: sus datos de la ciudad dejaron de actualizarse en
+  2022 y no incluyen viento.
+- **Fuente genérica:** OpenAQ (API v3) para las ciudades donde tenga datos recientes. Su API
+  key vive solo en el proxy.
+- **Siempre desde el proxy:** cada fuente se consulta una vez por hora desde un servidor
+  propio, nunca desde el navegador de cada visitante.
+- **Respaldo para viento:** Open-Meteo (datos modelados, etiquetados como tales), disponible
+  para cualquier coordenada.
+- **Cartografía:** OpenStreetMap (ODbL) como base para cualquier ciudad; fuentes oficiales
+  abiertas cuando existan, como IDECA – Mapa de Referencia de Bogotá (CC BY 4.0).
 - **Limpieza:** se descartan los códigos de "sin dato" (`-9999`) y los valores fuera de un
   rango plausible por variable. Los rangos son provisionales hasta tener la documentación
   oficial de la red.

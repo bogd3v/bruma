@@ -1,6 +1,6 @@
 [package]
 name = "bruma-data"
-description = "Modelo y limpieza de los datos de calidad del aire de Bogotá para Bruma"
+description = "Modelo y limpieza de los datos de calidad del aire para Bruma, independientes de la ciudad"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
