@@ -45,7 +45,16 @@ jobs:
           trunk --version
       - name: Build de producción
         working-directory: web
-        run: trunk build --release
+        run: |
+          set +e
+          trunk build --release 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Muestra el final del log como anotación, visible en el resumen del PR.
+            msg=$(tail -n 25 build.log | sed 's/\x1b\[[0-9;]*m//g' | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')
+            echo "::error title=trunk build falló::$msg"
+          fi
+          exit "$status"
       - name: Tamaño del binario
         working-directory: web/dist
         run: |
