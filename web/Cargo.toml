@@ -1,0 +1,34 @@
+[package]
+name = "bruma-web"
+description = "Bruma web app: canvas, animation loop and minimal UI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+bruma-render.workspace = true
+wgpu.workspace = true
+log.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+console_error_panic_hook.workspace = true
+console_log.workspace = true
+
+[dependencies.web-sys]
+workspace = true
+features = [
+  "Document",
+  "Element",
+  "HtmlCanvasElement",
+  "HtmlElement",
+  "MediaQueryList",
+  "Performance",
+  "Window",
+]
