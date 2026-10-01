@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bruma · calidad del aire de Bogotá</title>
+    <meta name="description" content="Bruma: la calidad del aire de Bogotá dibujada con Rust, WebAssembly y WebGPU. Fase 0: el primer triángulo." />
+    <meta name="color-scheme" content="dark" />
+
+    <link data-trunk rel="rust" href="Cargo.toml" data-bin="bruma-web" data-wasm-opt="z" />
+    <link data-trunk rel="css" href="styles.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <canvas id="bruma-canvas" aria-label="Triángulo animado dibujado con la GPU: verde, dorado y azul sobre fondo oscuro">
+      </canvas>
+
+      <header class="hud">
+        <h1>Bruma</h1>
+        <p>Fase 0 · el primer triángulo</p>
+      </header>
+
+      <p class="badge" aria-live="polite">GPU: <strong id="bruma-api">detectando…</strong></p>
+      <p id="bruma-status" class="status" role="status">Cargando WebAssembly…</p>
+
+      <footer class="credits">
+        Código abierto en
+        <a href="https://github.com/bogd3v/bruma">github.com/bogd3v/bruma</a>
+        · <a href="https://bogdev.com.co">BogDev</a>
+      </footer>
+    </main>
+
+    <noscript>Bruma necesita JavaScript y WebAssembly para dibujar con la GPU.</noscript>
+  </body>
+</html>

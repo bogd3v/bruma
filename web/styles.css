@@ -1,0 +1,118 @@
+:root {
+  --sky: #090b12;
+  --ink: #e8ecf4;
+  --quiet: #9aa4b8;
+  --leaf: #59c77a;
+  --sun: #f2c24d;
+  --glass: rgba(9, 11, 18, 0.62);
+  --line: rgba(232, 236, 244, 0.14);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--sky);
+  color: var(--ink);
+}
+
+.stage {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* El canvas llena el contenedor; Rust ajusta sus píxeles reales al tamaño CSS. */
+#bruma-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud,
+.badge,
+.status,
+.credits {
+  position: absolute;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--glass);
+  backdrop-filter: blur(6px);
+}
+
+.hud {
+  top: 1rem;
+  left: 1rem;
+}
+
+.hud h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+}
+
+.hud p {
+  margin: 0.15rem 0 0;
+  color: var(--quiet);
+  font-size: 0.85rem;
+}
+
+.badge {
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.85rem;
+  color: var(--quiet);
+}
+
+.badge strong {
+  color: var(--sun);
+}
+
+.status {
+  left: 50%;
+  bottom: 4rem;
+  transform: translateX(-50%);
+  max-width: min(90vw, 32rem);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.status:empty {
+  display: none;
+}
+
+.credits {
+  left: 1rem;
+  bottom: 1rem;
+  font-size: 0.75rem;
+  color: var(--quiet);
+}
+
+.credits a {
+  color: var(--leaf);
+}
+
+@media (max-width: 480px) {
+  .hud,
+  .badge {
+    top: 0.75rem;
+  }
+  .hud {
+    left: 0.75rem;
+  }
+  .badge {
+    right: 0.75rem;
+  }
+  .credits {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+}

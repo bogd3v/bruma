@@ -1,0 +1,11 @@
+[package]
+name = "bruma-data"
+description = "Modelo y limpieza de los datos de calidad del aire de Bogotá para Bruma"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]

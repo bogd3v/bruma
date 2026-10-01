@@ -1,0 +1,34 @@
+[workspace]
+resolver = "3"
+members = ["crates/bruma-data", "crates/bruma-render", "web"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.87"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/bogd3v/bruma"
+authors = ["BogDev <https://bogdev.com.co>"]
+
+[workspace.dependencies]
+bruma-data = { path = "crates/bruma-data" }
+bruma-render = { path = "crates/bruma-render" }
+
+# WebGPU como camino principal y WebGL2 como respaldo, ambos desde la misma API.
+wgpu = { version = "30", default-features = false, features = ["std", "wgsl", "webgpu", "webgl"] }
+bytemuck = { version = "1.25", features = ["derive"] }
+log = "0.4"
+
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = "0.3"
+console_error_panic_hook = "0.1"
+console_log = "1.0"
+
+[profile.release]
+# Binario Wasm pequeño: la carga inicial importa más que unos milisegundos de CPU.
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
