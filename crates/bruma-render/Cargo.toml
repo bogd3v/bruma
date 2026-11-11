@@ -1,0 +1,20 @@
+[package]
+name = "bruma-render"
+description = "Bruma rendering with wgpu (WebGPU with WebGL2 fallback)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+wgpu.workspace = true
+bytemuck.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+naga = { version = "30", features = ["wgsl-in", "glsl-out"] }
