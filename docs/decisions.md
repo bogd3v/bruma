@@ -61,6 +61,9 @@ one does, the new decision is added here instead of deleting the old one.
 - **Cleaning:** "no data" codes (`-9999`) and values outside a plausible per-variable range
   are discarded. The ranges are provisional until we have the network's official
   documentation.
+- **IDW at a point uses a planar distance** with the longitude scaled by the cosine of the
+  latitude: good enough inside one city; a great-circle distance is not needed at that
+  scale.
 
 ## Infrastructure
 
