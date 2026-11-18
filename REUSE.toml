@@ -1,0 +1,12 @@
+version = 1
+SPDX-PackageName = "Bruma"
+SPDX-PackageDownloadLocation = "https://github.com/bogd3v/bruma"
+
+# Licensing of every file, by path (REUSE specification 3.3). Later annotations win over earlier ones;
+# THIRD-PARTY.md explains the third-party entries.
+
+# MIT OR Apache-2.0 (LICENSE-MIT, LICENSE-APACHE)
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Los autores de Bruma (BogDev)"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

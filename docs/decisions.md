@@ -78,3 +78,7 @@ one does, the new decision is added here instead of deleting the old one.
 - **Workspace lints** (`[workspace.lints]`): `unsafe_code` is forbidden, public items need
   docs, and `unwrap`, `dbg!` and `todo!` are rejected outside tests. CI runs clippy for the
   whole workspace on both the native and the `wasm32` target.
+- **Engineering standard 2.3 with the Rust profile** (decided 2026-11-18): Bruma follows
+  the Micelio engineering standard and its Rust profile (`docs/engineering-standard.md`,
+  `docs/standard/rust.md`, pinned in `AGENTS.md`). The check command is `scripts/check.sh`.
+  This file stays the home of the decisions already in it; it is not turned into ADRs.
