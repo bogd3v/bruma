@@ -3,10 +3,12 @@
 //! Nothing here depends on a city: every source (RMCAB in Bogotá, OpenAQ in
 //! other cities, ...) is translated into these same types. In Phase 0 the crate
 //! only defines the basic types and the reading-cleaning rule; source adapters
-//! and interpolation (IDW) arrive in Phase 1.
+//! arrive in Phase 1. The estimate at one point (IDW) lives in [`idw`].
 //!
 //! It depends on nothing from the browser, so it is tested with a regular
 //! `cargo test` and then compiled to Wasm unchanged.
+
+pub mod idw;
 
 /// Variables Bruma uses from each station.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
