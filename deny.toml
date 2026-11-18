@@ -1,0 +1,21 @@
+# The licence allowlist of section 10 of the Rust profile, checked by `cargo deny check licenses`
+# (the check command of AGENTS.md runs it). The policy is this repository's: edit the list to the
+# licences it accepts for its dependencies, and write down why next to any one you add.
+[licenses]
+allow = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
+    "MIT",
+    "MIT-0",
+    "Unicode-3.0",
+    # slotmap and one more crate of the wgpu graphics stack.
+    "Zlib",
+]
+confidence-threshold = 0.93
+# The list is a policy, not an inventory: a licence may be allowed before a dependency uses it.
+unused-allowed-license = "allow"
+
+[licenses.private]
+# Bruma's own crates are MIT OR Apache-2.0, which is not a dependency's license.
+ignore = true

@@ -1,43 +1,70 @@
 name: CI
 
+# The required checks of section 15 of the engineering standard, called from the reusable workflows of
+# micelio-engineering (docs/workflows.md there), pinned by commit SHA. The Trunk build, the binary size
+# and the dist/ artifact are Bruma's own job. No top-level `env:` or `defaults:` block: the Scorecard
+# workflow of this file would lose its publishing rights (docs/workflows.md of micelio-engineering).
+
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-  pull_request:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
 
-permissions:
-  contents: read
-
-env:
-  CARGO_TERM_COLOR: always
-  TRUNK_VERSION: v0.21.14
+permissions: {}
 
 jobs:
+  # Runs on the schedule too: the rust profile's `cargo audit --deny warnings` is the weekly check
+  # for new advisories (section 10). The check command is scripts/check.sh (AGENTS.md).
   check:
-    name: Format, lint and tests
+    permissions:
+      contents: read
+    uses: bogd3v/micelio-engineering/.github/workflows/check.yml@d7216266466d1536544848b49399d19815bb5275 # main
+    with:
+      profile: rust
+      standard: true
+      tools-ref: d7216266466d1536544848b49399d19815bb5275
+      lint-standard-version: 0.2.10
+      reuse: true
+
+  # The lowest supported Rust version, rust-version in Cargo.toml (section 10 of the Rust profile).
+  msrv:
+    name: Tests on the MSRV (1.87)
+    if: ${{ github.event_name != 'schedule' }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+          persist-credentials: false
+      - name: Install Rust 1.87
+        run: rustup toolchain install 1.87 --profile minimal
+      - name: Test
+        run: cargo +1.87 test --workspace --locked
 
   web:
     name: Build web (Trunk → Wasm)
+    if: ${{ github.event_name != 'schedule' }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+      TRUNK_VERSION: v0.21.14
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          targets: wasm32-unknown-unknown
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - name: Lint for wasm32
-        run: cargo clippy --workspace --target wasm32-unknown-unknown -- -D warnings
+          persist-credentials: false
+      - name: Install the toolchain of rust-toolchain.toml
+        run: rustup toolchain install --profile minimal
       - name: Install Trunk
         run: |
           curl -sSL "https://github.com/trunk-rs/trunk/releases/download/${TRUNK_VERSION}/trunk-x86_64-unknown-linux-gnu.tar.gz" \
@@ -61,7 +88,23 @@ jobs:
           for f in *.wasm; do
             echo "$f: $(stat -c%s "$f") bytes · gzip: $(gzip -9 -c "$f" | wc -c) bytes"
           done | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - name: Keep the build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bruma-web-dist
           path: web/dist
+
+  dco:
+    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+    uses: bogd3v/micelio-engineering/.github/workflows/dco.yml@d7216266466d1536544848b49399d19815bb5275 # main
+
+  scorecard:
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+    uses: bogd3v/micelio-engineering/.github/workflows/scorecard.yml@d7216266466d1536544848b49399d19815bb5275 # main
