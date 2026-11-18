@@ -28,6 +28,8 @@ const COINCIDENT: f64 = 1e-9;
 /// - `power` is not finite or is not greater than 0: returns `None`.
 /// - a sample is closer than `1e-9` degrees: returns the value of the first
 ///   such sample in the slice, without dividing by zero.
+/// - the weighted mean is not finite, as when `dᵢ^power` underflows to 0 or
+///   overflows to infinity for a large `power`: returns `None`.
 /// - otherwise: returns the weighted mean above.
 pub fn idw_at(lon: f64, lat: f64, samples: &[Sample], power: f64) -> Option<f64> {
     if samples.is_empty() || !power.is_finite() || power <= 0.0 {
@@ -47,7 +49,8 @@ pub fn idw_at(lon: f64, lat: f64, samples: &[Sample], power: f64) -> Option<f64>
         weighted += w * sample.value;
         total += w;
     }
-    Some(weighted / total)
+    let mean = weighted / total;
+    mean.is_finite().then_some(mean)
 }
 
 #[cfg(test)]
@@ -79,6 +82,20 @@ mod tests {
         assert_eq!(idw_at(3.0, 4.0, &samples, 2.0), Some(10.0));
         // Inside the 1e-9 degree threshold still counts as the same point.
         assert_eq!(idw_at(3.0 + 1e-10, 4.0, &samples, 2.0), Some(10.0));
+    }
+
+    #[test]
+    fn returns_none_when_the_weights_underflow() {
+        // 0.01^1000 underflows to 0, so every weight is infinite: inf / inf.
+        let samples = [at(0.01, 0.0, 10.0), at(-0.01, 0.0, 30.0)];
+        assert_eq!(idw_at(0.0, 0.0, &samples, 1000.0), None);
+    }
+
+    #[test]
+    fn returns_none_when_the_weights_overflow() {
+        // 100^1000 overflows to infinity, so every weight is 0: 0 / 0.
+        let samples = [at(100.0, 0.0, 10.0), at(-100.0, 0.0, 30.0)];
+        assert_eq!(idw_at(0.0, 0.0, &samples, 1000.0), None);
     }
 
     #[test]
