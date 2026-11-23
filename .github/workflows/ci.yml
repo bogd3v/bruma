@@ -22,7 +22,7 @@ jobs:
   check:
     permissions:
       contents: read
-    uses: bogd3v/micelio-engineering/.github/workflows/check.yml@d7216266466d1536544848b49399d19815bb5275 # main
+    uses: bogd3v/micelio-engineering/.github/workflows/check.yml@d0ebe4c9a0a2d4c2c9408709ec05a8f03d45ce3d # main
     with:
       profile: rust
       standard: true
